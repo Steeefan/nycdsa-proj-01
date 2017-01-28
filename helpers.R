@@ -294,16 +294,16 @@ sankeyTrips = function(routesData, cutoff) {
 
 # Column chart about stations, docks in cities
 stationColumn = function(chart) {
-  if (chart == 'staPerCity') {
-    titleText = 'Stations'
-    yVar = c('Stations')
-  } else {
-    titleText = 'Docks'
-    yVar = c('Docks')
-  }
+  # if (chart == 'staPerCity') {
+  #   titleText = 'Stations'
+  #   yVar = c('Stations')
+  # } else {
+  #   titleText = 'Docks'
+  #   yVar = c('Docks')
+  # }
 
-  # titleText = 'Stations, Docks'
-  # yVar = c('Stations', 'Docks')
+  titleText = 'Stations, Docks'
+  yVar = c('Stations', 'Docks')
 
   gvisColumnChart(
     docks,
@@ -311,33 +311,22 @@ stationColumn = function(chart) {
     yvar=yVar,
     options = list(
       height=500,
+      width='100%',
       hAxis="{title: 'City'}",
-      vAxis=
-        paste(
-          "{",
-            "minorGridlines: { count: 1 },",
-            "title: \'", titleText, "\'",
-          "}"
-        ),
-      series=
-        paste(
-          "{",
-            "0: { axis: 'stations' }, ",
-            "1: { axis: 'docks' }",
-          "}"
-        ),
-      axes=
-        paste(
-          "{",
-            "y:",
-            "{",
-              "stations: { label: 'Stations' }, ",
-              "docks: { label: 'Docks' }",
-            "}",
-          "}"
-        ),
-      title=paste(titleText, 'x City')
-      #series="[{labelInLegend: 'Stations'}]"
+      series=paste(
+        "[",
+          "{ targetAxisIndex: 0 },",
+          "{ targetAxisIndex: 1 }",
+        "]"
+      ),
+      vAxes=paste(
+        "[",
+          "{ title: 'Stations', width: 10, minorGridlines: { count: 1 } },",
+          "{ title: 'Docks' }",
+        "]"
+      ),
+      title=paste(titleText, 'x City'),
+      chartArea="{ width: '85%' }"
     )
   )
 }
@@ -362,6 +351,37 @@ bikeTimeLine = function(daysFromTo) {
       height=500,
       width='99%',
       colors=paste0("[", bikeCol, "]")
+    )
+  )
+}
+
+weatherTripsChart = function(data, zip, dateFrom, dateTo, temp) {
+  gvisComboChart(
+    filter(data, ZIP==zip, Date >= dateFrom, Date <= dateTo),
+    xvar='Date',
+    yvar=c(
+      'n',
+      paste0('Mean.Temperature', temp)
+    ),
+    options=list(
+      seriesType="bars",
+      series=paste(
+        "[",
+          "{ targetAxisIndex: 0 },",
+          "{ targetAxisIndex: 1, type: 'line' }",
+        "]"
+      ),
+      vAxes=paste(
+        "[",
+          "{ title: 'Trips', width: 10, minorGridlines: { count: 1 } },",
+          "{ title: 'deg. C' }",
+          #"{ minorGridlines: { count: 1 } },",
+        "]"
+      ),
+      chartArea="{ width: '85%' }",
+      height=600,
+      width='100%',
+      title='Trips vs. avg. temperature'
     )
   )
 }

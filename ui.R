@@ -15,6 +15,7 @@ dbHeader$children[[2]]$children =
     )
 
 shinyUI(dashboardPage(
+  skin = 'blue',
   dbHeader,
 
   dashboardSidebar(
@@ -49,6 +50,12 @@ shinyUI(dashboardPage(
         'Customers',
         tabName = 'customers',
         icon = icon('users')
+      ),
+
+      menuItem(
+        'Weather',
+        tabName = 'weather',
+        icon = icon('cloud')
       ),
 
       menuItem(
@@ -103,6 +110,7 @@ shinyUI(dashboardPage(
         tabsetPanel(
           tabPanel(
             'Map',
+
             fluidRow(
               box(
                 leafletOutput(
@@ -116,16 +124,17 @@ shinyUI(dashboardPage(
           ),
           tabPanel(
             'Overview',
+
             fluidRow(
               box(
                 htmlOutput('staPerCity'),
-                width=6
-              ),
-
-              box(
-                htmlOutput('dockPerCity'),
-                width=6
+                width=12
               )
+
+              # box(
+              #   htmlOutput('dockPerCity'),
+              #   width=6
+              # )
             )
           ),
 
@@ -183,6 +192,7 @@ shinyUI(dashboardPage(
 
           tabPanel(
             'Station comparison',
+
             fluidRow(
               box(
                 selectInput(
@@ -210,6 +220,7 @@ shinyUI(dashboardPage(
             tabsetPanel(
               tabPanel(
                 'Trip date',
+
                 fluidRow(
                   box(
                     htmlOutput('staCalendarComp1'),
@@ -229,6 +240,7 @@ shinyUI(dashboardPage(
 
               tabPanel(
                 'Trip start time',
+
                 fluidRow(
                   box(
                     plotOutput(
@@ -252,6 +264,7 @@ shinyUI(dashboardPage(
 
               tabPanel(
                 'Trip end time',
+
                 fluidRow(
                   box(
                     plotOutput(
@@ -280,6 +293,7 @@ shinyUI(dashboardPage(
       tabItem(
         tabName = 'trips',
         h2('Trips'),
+
         fluidRow(
           infoBoxOutput('tripCount', width=4),
           infoBoxOutput('maxTripABne', width=4),
@@ -318,6 +332,7 @@ shinyUI(dashboardPage(
         tabsetPanel(
           tabPanel(
             'Map',
+
             fluidRow(
               box(
                 leafletOutput(
@@ -332,6 +347,7 @@ shinyUI(dashboardPage(
 
           tabPanel(
             'Sankey',
+
             fluidRow(
               box(
                 htmlOutput('tripsSankey'),
@@ -343,6 +359,7 @@ shinyUI(dashboardPage(
 
           tabPanel(
             'Table',
+
             fluidRow(
               box(
                 htmlOutput('tripsTable'),
@@ -366,6 +383,7 @@ shinyUI(dashboardPage(
         tabsetPanel(
           tabPanel(
             'Overview',
+
             fluidRow(
               box(
                 selectInput(
@@ -396,6 +414,7 @@ shinyUI(dashboardPage(
 
           tabPanel(
             'Bikes in operation',
+
             fluidRow(
               box(
                 sliderInput(
@@ -423,6 +442,7 @@ shinyUI(dashboardPage(
       tabItem(
         tabName = 'customers',
         h2('Customers'),
+
         fluidRow(
           valueBoxOutput('custSubscr'),
           valueBoxOutput('custCust'),
@@ -443,12 +463,65 @@ shinyUI(dashboardPage(
       ),
 
       tabItem(
+        tabName = 'weather',
+        h2('Weather'),
+
+        fluidRow(
+          box(
+            selectInput(
+              'weatherCity',
+              label=h4('Select city'),
+              choices = setNames(arrange(zip2City, city)$ZIP, arrange(zip2City, city)$city)
+            ),
+            width=3,
+            height=110
+          ),
+
+          box(
+            dateRangeInput(
+              'weatherDate',
+              label=h4('Select date range'),
+              start=min(weatherTrips$Date),
+              end=max(weatherTrips$Date),
+              min=min(weatherTrips$Date),
+              max=max(weatherTrips$Date)
+            ),
+            width=3,
+            height=110
+          ),
+
+          box(
+            selectInput(
+              'weatherTemp',
+              label=h4('Select temperature scale'),
+              choices = list(
+                'Fahrenheit' = 'F',
+                'Celsius' = 'C'
+              )
+            ),
+            width=3,
+            height=110
+          )
+        ),
+
+        fluidRow(
+          box(
+            htmlOutput('weatherTrips'),
+            width=12
+          )
+        )
+      ),
+
+      tabItem(
         tabName = 'about',
         h2('About'),
         fluidRow(
           box(
             'Code: ', a(href='mailto:sh@steeefan.de', 'Stefan Heinz'), br(),
-            'Data: ', a(href='http://www.bayareabikeshare.com/open-data', 'Bay Area Bike Share')
+            'Data: ', a(href='http://www.bayareabikeshare.com/open-data', 'Bay Area Bike Share'), br(),
+            br(),
+            'This project has no affiliation with Bay Area Bike Share or Motivate International, Inc. It\'s build on top of their freely',
+            a(href='http://www.bayareabikeshare.com/open-data', 'available data.')
           )
         )
       )

@@ -117,10 +117,10 @@ shinyServer(function(input, output, session) {
     stationColumn('staPerCity')
   )
 
-  output$dockPerCity = renderGvis(
-    #stationBar('dockPerCity')
-    stationColumn('dockPerCity')
-  )
+  # output$dockPerCity = renderGvis(
+  #   #stationBar('dockPerCity')
+  #   stationColumn('dockPerCity')
+  # )
 
   output$staStartByHour = renderPlot(
     stationRoseChart(staStartByHour, input$stationDetail)
@@ -290,6 +290,10 @@ shinyServer(function(input, output, session) {
       ),
       icon = icon('calendar')
     )
+  )
+
+  output$weatherTrips = renderGvis(
+    weatherTripsChart(weatherTrips, input$weatherCity, input$weatherDate[1], input$weatherDate[2], input$weatherTemp)
   )
 })
 
