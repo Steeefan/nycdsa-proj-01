@@ -1,7 +1,7 @@
 # helpers.R
 
-# Draw station map
-stationMap <- function(mapType) {
+# Draw stations map
+stationsMap <- function(mapType) {
   if (mapType == 'trips') {
     popupText = paste(
       sep = '<br />',
@@ -20,7 +20,7 @@ stationMap <- function(mapType) {
   }
 
   leaflet(stations) %>% addProviderTiles('Stamen.Terrain') %>%
-    addMarkers(popup = popupText)
+    addMarkers(lat = ~lat, lng = ~long, popup = popupText)
 }
 
 # Add routes to station map
@@ -86,8 +86,6 @@ bikeHisto = function(bikes, metric) {
     'medDur' = 10^2
   )
 
-  cat(bucketSize)
-
   g  = gvisHistogram(
     select(
       bikes,
@@ -123,15 +121,6 @@ bikeHisto = function(bikes, metric) {
     )
   )
 }
-
-# getBikeMetric = function(choice) {
-#   switch(
-#     choice,
-#     'Count' = 'n',
-#     'Total Duration' = 'dur',
-#     'Median Duration' = 'medDur'
-#   )
-# }
 
 # Order bikes df by metric, desc or asc
 orderBikes = function(df, metric, order='asc') {
@@ -252,32 +241,6 @@ stationCalendar = function(staTripData, staData, staId) {
   )
 }
 
-# sankeyTripsD3 = function(routes) {
-#   g <- graph.tree(nrow(routes) + 1, children = 4)
-#
-#   E(g)$weight = 1
-#   edges <- get.data.frame(g)
-#
-#   edges$from <- as.character(routes$nameStart)
-#   edges$to <- as.character(routes$nameEnd)
-#   edges$value <- routes$n
-#
-#   sankeyPlot <- rCharts$new()
-#   sankeyPlot$setLib('http://timelyportfolio.github.io/rCharts_d3_sankey/libraries/widgets/d3_sankey')
-#   sankeyPlot$setTemplate(script = 'http://timelyportfolio.github.io/rCharts_d3_sankey/libraries/widgets/d3_sankey/layouts/chart.html')
-#
-#   sankeyPlot$set(
-#     data = edges,
-#     nodeWidth = 15,
-#     nodePadding = 10,
-#     layout = 32,
-#     width = 960,
-#     height = 500
-#   )
-#
-#   return(sankeyPlot)
-# }
-
 # Sankey chart about trips
 sankeyTrips = function(routesData, cutoff) {
   gvisSankey(
@@ -287,21 +250,13 @@ sankeyTrips = function(routesData, cutoff) {
     weight='n',
     options=list(
       width='100%',
-      height=500
+      height=600
     )
   )
 }
 
 # Column chart about stations, docks in cities
 stationColumn = function(chart) {
-  # if (chart == 'staPerCity') {
-  #   titleText = 'Stations'
-  #   yVar = c('Stations')
-  # } else {
-  #   titleText = 'Docks'
-  #   yVar = c('Docks')
-  # }
-
   titleText = 'Stations, Docks'
   yVar = c('Stations', 'Docks')
 
@@ -333,8 +288,6 @@ stationColumn = function(chart) {
 
 # Timeline about bikes in operation
 bikeTimeLine = function(daysFromTo) {
-  cat(daysFromTo[1], daysFromTo[2])
-
   fromCol = '#89b5ff'
   toCol = '#29497e'
   bikeCol = paste0("'", colorRampPalette(c(fromCol, toCol))(nrow(bikes)), "'", collapse=',')
@@ -348,20 +301,20 @@ bikeTimeLine = function(daysFromTo) {
     end="maxDate",
     options=list(
       timeline="{groupByRowLabel:false}",
-      height=500,
+      height=1000,
       width='99%',
       colors=paste0("[", bikeCol, "]")
     )
   )
 }
 
-weatherTripsChart = function(data, zip, dateFrom, dateTo, temp) {
+weatherTripsChart = function(data, zip, dateFrom, dateTo, metric) {
   gvisComboChart(
     filter(data, ZIP==zip, Date >= dateFrom, Date <= dateTo),
     xvar='Date',
     yvar=c(
       'n',
-      paste0('Mean.Temperature', temp)
+      ifelse(metric == 'Cloud', 'CloudCover', paste0('Mean.Temperature', metric))
     ),
     options=list(
       seriesType="bars",
@@ -374,14 +327,41 @@ weatherTripsChart = function(data, zip, dateFrom, dateTo, temp) {
       vAxes=paste(
         "[",
           "{ title: 'Trips', width: 10, minorGridlines: { count: 1 } },",
-          "{ title: 'deg. C' }",
-          #"{ minorGridlines: { count: 1 } },",
+          paste(
+            "{",
+              "title: ",
+              ifelse(metric == 'Cloud', '\'Cloud Cover\'', paste0('\'deg. ', metric, '\'')),
+            "}"
+            ),
         "]"
       ),
       chartArea="{ width: '85%' }",
       height=600,
       width='100%',
-      title='Trips vs. avg. temperature'
+      title=paste(
+        'Trips vs.',
+        ifelse(metric == 'Cloud', 'Cloud Cover', paste('avg. temperature in', metric))
+      )
     )
   )
+}
+
+tripsTable = function(tripsWhich) {
+  if (tripsWhich == 0) {
+    stop('Please select one of the options from the \"Routes to display\" dropdown.')
+  } else {
+    gvisTable(
+      transmute(
+        eval(parse(text = paste(tripsWhich))),
+        Start = nameStart,
+        End = nameEnd,
+        Trips = n,
+        Total.Duration = round(totalDur / 60, 2),
+        Min.Duration = round(minDur / 60, 2),
+        Max.Duration = round(maxDur / 60, 2),
+        Avg.Duration = round(avgDur / 60, 2),
+        Med.Duration = round(medDur / 60, 2)
+      )
+    )
+  }
 }

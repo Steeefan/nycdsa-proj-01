@@ -71,6 +71,7 @@ shinyUI(dashboardPage(
       tabItem(
         tabName = 'start',
         h2('Bay Area Bike Share Management Dashboard'),
+
         fluidRow(
           box(
             p('Welcome to the Bay Area Bike Share Management Dashboard!'),
@@ -130,16 +131,12 @@ shinyUI(dashboardPage(
                 htmlOutput('staPerCity'),
                 width=12
               )
-
-              # box(
-              #   htmlOutput('dockPerCity'),
-              #   width=6
-              # )
             )
           ),
 
           tabPanel(
             'Detail per Station',
+
             fluidRow(
               box(
                 selectInput(
@@ -307,8 +304,6 @@ shinyUI(dashboardPage(
               label=h4('Routes to display'),
               choices=list(
                 'None' = 0,
-                # 'A:B != B:A' = 1,
-                # 'A:B == B:A' = 2
                 'A:B != B:A' = 'routesABne',
                 'A:B == B:A' = 'routesABe'
               ),
@@ -351,8 +346,7 @@ shinyUI(dashboardPage(
             fluidRow(
               box(
                 htmlOutput('tripsSankey'),
-                width=12,
-                height=600
+                width=12
               )
             )
           ),
@@ -422,8 +416,7 @@ shinyUI(dashboardPage(
                   label=h4('Select days in operation'),
                   min=min(bikes$daysInUse),
                   max=max(bikes$daysInUse),
-                  value=c(min(bikes$daysInUse), max(bikes$daysInUse)),
-                  step=-1
+                  value=c(min(bikes$daysInUse), max(bikes$daysInUse))
                 ),
                 width=12
               )
@@ -473,7 +466,7 @@ shinyUI(dashboardPage(
               label=h4('Select city'),
               choices = setNames(arrange(zip2City, city)$ZIP, arrange(zip2City, city)$city)
             ),
-            width=3,
+            width=4,
             height=110
           ),
 
@@ -486,20 +479,21 @@ shinyUI(dashboardPage(
               min=min(weatherTrips$Date),
               max=max(weatherTrips$Date)
             ),
-            width=3,
+            width=4,
             height=110
           ),
 
           box(
             selectInput(
-              'weatherTemp',
-              label=h4('Select temperature scale'),
+              'weatherMetric',
+              label=h4('Select metric to measure against'),
               choices = list(
-                'Fahrenheit' = 'F',
-                'Celsius' = 'C'
+                'Temp. F' = 'F',
+                'Temp. C' = 'C',
+                'Cloud Cover' = 'Cloud'
               )
             ),
-            width=3,
+            width=4,
             height=110
           )
         ),
@@ -520,8 +514,10 @@ shinyUI(dashboardPage(
             'Code: ', a(href='mailto:sh@steeefan.de', 'Stefan Heinz'), br(),
             'Data: ', a(href='http://www.bayareabikeshare.com/open-data', 'Bay Area Bike Share'), br(),
             br(),
-            'This project has no affiliation with Bay Area Bike Share or Motivate International, Inc. It\'s build on top of their freely',
-            a(href='http://www.bayareabikeshare.com/open-data', 'available data.')
+            'This project has no affiliation with Bay Area Bike Share or Motivate International, Inc.',
+            'It\'s build on top of their freely',
+            a(href='http://www.bayareabikeshare.com/open-data', 'available data'),
+            'as part of the', a(href='nycdatascience.com/data-science-bootcamp/', 'NYC Data Science Academy Data Science Bootcamp.')
           )
         )
       )

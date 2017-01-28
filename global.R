@@ -24,16 +24,16 @@ source('helpers.R')
 # stations = readRDS('data/2015_station_data-v2.rds')
 # trips = readRDS('data/2015_trip_data.rds')
 # weather = readRDS('data/2015_weather_data.rds')
-# zip2City = read.csv('data/zip2city.csv')
+# zip2City = read.csv('data/zip2city.csv', stringsAsFactors = F)
 #
 # # Clean up data, names
 # # station_data.csv has loads of empty lines after the final entry
-# sum(is.na(stations))
+# # sum(is.na(stations))
 # stations = filter(stations, station_id > 0)
-# colnames(stations)
-#
-# sum(is.na(trips))
-# colnames(trips)
+# # colnames(stations)
+# #
+# # sum(is.na(trips))
+# # colnames(trips)
 # trips = rename(
 #   trips,
 #   Bike.No = Bike..,
@@ -41,23 +41,24 @@ source('helpers.R')
 #   End.Date.src = End.Date
 # )
 #
-# sum(is.na(weather))
-# # When there's no event, e.g. rain or fog, than that field's NA as well
-# colnames(weather[, colSums(is.na(weather)) > 0])
+# # sum(is.na(weather))
+# # When there's no event, e.g. rain or fog, than that field's NA
+# # colnames(weather[, colSums(is.na(weather)) > 0])
 #
 # # There are some missing temperature values that need to be taken care of
-# weatherZoo = zoo(select(weather, ZIP, Date, Mean.TemperatureF, Mean.TemperatureC))
-# sum(is.na(weatherZoo))
-# weatherZoo= na.locf(wz)
-# sum(is.na(weatherZoo))
+# weatherZoo = zoo(select(weather, ZIP, Date, Mean.TemperatureF, Mean.TemperatureC, CloudCover))
+# # sum(is.na(weatherZoo))
+# weatherZoo=na.locf(weatherZoo)
+# # sum(is.na(weatherZoo))
 #
 # weatherZoo =
 #   mutate(
-#     as.data.frame(wz_approx),
+#     as.data.frame(weatherZoo),
 #     ZIP = as.numeric(as.character(ZIP)),
 #     Date = as.Date(Date),
 #     Mean.TemperatureF = as.numeric(as.character(Mean.TemperatureF)),
-#     Mean.TemperatureC = as.numeric(as.character(Mean.TemperatureC))
+#     Mean.TemperatureC = as.numeric(as.character(Mean.TemperatureC)),
+#     CloudCover = as.numeric(as.character(CloudCover))
 #   )
 #
 # weatherZoo = left_join(
@@ -72,8 +73,7 @@ source('helpers.R')
 #     WDay,
 #     Week,
 #     Quarter,
-#     Events,
-#     CloudCover
+#     Events
 #   ),
 #   by=c('ZIP', 'Date')
 # )
@@ -100,7 +100,6 @@ source('helpers.R')
 #
 #     Start.Date.WDay = substr(wday(Start.Date, label = T), 1, 3),  # week starts on Sun in the US!
 #     Start.Date.Week = week(Start.Date),
-#     #Start.Date.Quarter = paste0('Q', as.character(ceiling(month(Start.Date) / 3)), '/', year),
 #     Start.Date.Quarter = ceiling(month(Start.Date) / 3),
 #
 #     Start.Date.Hour = hour(Start.Date),
@@ -115,7 +114,6 @@ source('helpers.R')
 #
 #     End.Date.WDay = substr(wday(End.Date, label = T), 1, 3),      # week starts on Sun in the US!
 #     End.Date.Week = week(End.Date),
-#     #End.Date.Quarter = paste0('Q', as.character(ceiling(month(End.Date) / 3)), '/', year)
 #     End.Date.Quarter = ceiling(month(End.Date) / 3),
 #
 #     End.Date.Hour = hour(End.Date)
@@ -232,40 +230,40 @@ source('helpers.R')
 #   ) %>% arrange(daysInUse)
 #
 # # Bike usage per bike, route A:B != B:A
-# bikesABe = trips %>%
-#   group_by(Bike.No, route) %>%
-#   summarise(
-#     n = n(),
-#     dur = sum(Duration),
-#     medDur = median(Duration)
-#   )
+# # bikesABe = trips %>%
+# #   group_by(Bike.No, route) %>%
+# #   summarise(
+# #     n = n(),
+# #     dur = sum(Duration),
+# #     medDur = median(Duration)
+# #   )
 #
-# # Bike usage per bike, route A:B == B:A
-# bikesABne = trips %>%
-#   group_by(Bike.No, normRoute) %>%
-#   summarise(
-#     n = n(),
-#     dur = sum(Duration),
-#     medDur = median(Duration)
-#   )
+# # # Bike usage per bike, route A:B == B:A
+# # bikesABne = trips %>%
+# #   group_by(Bike.No, normRoute) %>%
+# #   summarise(
+# #     n = n(),
+# #     dur = sum(Duration),
+# #     medDur = median(Duration)
+# #   )
 #
 # # Bike usage per bike, start station
-# bikesStatFrom = trips %>%
-#   group_by(Bike.No, Start.Terminal) %>%
-#   summarise(
-#     n = n(),
-#     dur = sum(Duration),
-#     medDur = median(Duration)
-#   )
+# # bikesStatFrom = trips %>%
+# #   group_by(Bike.No, Start.Terminal) %>%
+# #   summarise(
+# #     n = n(),
+# #     dur = sum(Duration),
+# #     medDur = median(Duration)
+# #   )
 #
 # # Bike usage per bike, end station
-# bikesStatTo = trips %>%
-#   group_by(Bike.No, End.Terminal) %>%
-#   summarise(
-#     n = n(),
-#     dur = sum(Duration),
-#     medDur = median(Duration)
-#   )
+# # bikesStatTo = trips %>%
+# #   group_by(Bike.No, End.Terminal) %>%
+# #   summarise(
+# #     n = n(),
+# #     dur = sum(Duration),
+# #     medDur = median(Duration)
+# #   )
 #
 # ## STATIONS
 # docks = stations %>%
@@ -315,12 +313,12 @@ source('helpers.R')
 #
 # weatherTrips = left_join(weatherZoo, zipStartByDate, by=(c('ZIP', 'Date' = 'Start.Date.Date')))
 #
-# weatherEvents = weatherTrips %>%
-#   group_by(ZIP, Events) %>%
-#   summarise(
-#     nEvts = n(),
-#     avgTrips = round(mean(n, na.rm = T), 0)
-#   )
+# # weatherEvents = weatherTrips %>%
+# #   group_by(ZIP, Events) %>%
+# #   summarise(
+# #     nEvts = n(),
+# #     avgTrips = round(mean(n, na.rm = T), 0)
+# #   )
 #
 # routesABneSankey = as.data.frame(routesABne) %>%
 #   transmute(

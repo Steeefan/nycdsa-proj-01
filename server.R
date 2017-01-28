@@ -2,56 +2,231 @@
 
 shinyServer(function(input, output, session) {
 
-  # finalMap <- reactive({
-  #   if (input$tripsWhich == 2) {
-  #     addRoutes(stationMap('trips'), routesABe)
-  #   } else if (input$tripsWhich == 3) {
-  #     stationMap('trips')
-  #   }
-  # })
+  ########## START ##########
+  datesLoadedReact = reactive({
+    infoBox(
+      h4('Data loaded for'),
+      paste(
+        min(trips$Start.Date),
+        '-',
+        max(trips$End.Date)
+      ),
+      icon = icon('calendar')
+    )
+  })
+
+  output$datesLoaded = renderInfoBox(
+    datesLoadedReact()
+  )
+
+  ########## STATIONS ##########
+  stationsMapReact = reactive({
+    stationsMap('stations')
+  })
+
+  output$stationsMap = renderLeaflet(
+    stationsMapReact()
+  )
+
+  staCountReact = reactive({
+    infoBox(
+      h4('Stations'),
+      nrow(stations),
+      icon = icon('home')
+    )
+  })
+
+  output$staCount = renderInfoBox(
+    staCountReact()
+  )
+
+  cityCountReact = reactive({
+    infoBox(
+      h4('Cities'),
+      nrow(distinct(stations, landmark)),
+      icon = icon('map-signs')
+    )
+  })
+
+  output$cityCount = renderInfoBox(
+    cityCountReact()
+  )
+
+  dockCountReact = reactive({
+    infoBox(
+      h4('Docks'),
+      format(sum(stations$dockcount), scientific=F, decimal.mark=".", big.mark=","),
+      icon = icon('plug')
+    )
+  })
+
+  output$dockCount = renderInfoBox(
+    dockCountReact()
+  )
+
+  staPerCityReact = reactive({
+    stationColumn('staPerCity')
+  })
+
+  output$staPerCity = renderGvis(
+    staPerCityReact()
+  )
+
+  staSartByHourReact = reactive({
+    stationRoseChart(staStartByHour, input$stationDetail)
+  })
+
+  output$staStartByHour = renderPlot(
+    staSartByHourReact()
+  )
+
+  staEndByHourReact = reactive({
+    stationRoseChart(staEndByHour, input$stationDetail)
+  })
+
+  output$staEndByHour = renderPlot(
+    staEndByHourReact()
+  )
+
+  staStartByHourComp1React = reactive({
+    stationRoseChart(staStartByHour, input$staComp1)
+  })
+
+  output$staStartByHourComp1 = renderPlot(
+    staStartByHourComp1React()
+  )
+
+  staStartByHourComp2React = reactive({
+    stationRoseChart(staStartByHour, input$staComp2)
+  })
+
+  output$staStartByHourComp2 = renderPlot(
+    staStartByHourComp2React()
+  )
+
+  staEndByHourComp1React = reactive({
+    stationRoseChart(staEndByHour, input$staComp1)
+  })
+
+  output$staEndByHourComp1 = renderPlot(
+    staEndByHourComp1React()
+  )
+
+  staEndByHourComp2React = reactive({
+    stationRoseChart(staEndByHour, input$staComp2)
+  })
+
+  output$staEndByHourComp2 = renderPlot(
+    staEndByHourComp2React()
+  )
+
+  staCalendarReact = reactive({
+    stationCalendar(staStartByDate, stations, input$stationDetail)
+  })
+
+  output$staCalendar = renderGvis(
+    staCalendarReact()
+  )
+
+  staCalendarComp1React = reactive({
+    stationCalendar(staStartByDate, stations, input$staComp1)
+  })
+
+  output$staCalendarComp1 = renderGvis(
+    staCalendarComp1React()
+  )
+
+  staCalendarComp2React = reactive({
+    stationCalendar(staStartByDate, stations, input$staComp2)
+  })
+
+  output$staCalendarComp2 = renderGvis(
+    staCalendarComp2React()
+  )
+
+  ########## TRIPS ##########
+  observeEvent({
+    input$tripsWhich
+    input$tripsCutoff
+  },
+  {
+    proxy = leafletProxy('tripsMap')
+    clearShapes(proxy)
+
+    if (input$tripsWhich > 0) {
+      routesForMap = eval(parse(text = paste(input$tripsWhich)))
+      proxy %>% addRoutes(routesForMap, input$tripsCutoff)
+    }
+  })
+
+  maxTripABeReact = reactive({
+    trip = getTrip(routesABe)
+
+    infoBox(
+      h4('Trip most taken (A:B=B:A)'),
+      h6(trip),
+      icon=icon('arrow-up')
+    )
+  })
+
+  output$maxTripABe = renderInfoBox({
+    maxTripABeReact()
+  })
+
+  maxTripABneReact = reactive({
+    trip = getTrip(routesABne)
+
+    infoBox(
+      h4('Trip most taken (A:B!=B:A)'),
+      h6(trip),
+      icon=icon('arrow-up')
+    )
+  })
+
+  output$maxTripABne = renderInfoBox({
+    maxTripABneReact()
+  })
+
+  tripCountReact = reactive({
+    infoBox(
+      h4('Trips'),
+      format(nrow(trips), scientific=F, decimal.mark=".", big.mark=","),
+      icon=icon('exchange')
+    )
+  })
+
+  output$tripCount = renderInfoBox({
+    tripCountReact()
+  })
 
   output$tripsMap = renderLeaflet(
     stationMap('trips')
   )
 
-  observeEvent({
-      input$tripsWhich
-      input$tripsCutoff
-    },
-    {
-      proxy = leafletProxy('tripsMap')
-      clearShapes(proxy)
+  tripsSankeyReact = reactive({
+    if (input$tripsWhich == 0) {
+      routesData = data.frame(nameStart='From', nameEnd='To', n=input$tripsCutoff+1)
+    } else {
+      routesData = eval(parse(text = paste0(input$tripsWhich, 'Sankey')))
+    }
 
-      if (input$tripsWhich > 0) {
-        # if (input$tripsWhich == 1) {
-        #   routesForMap = routesABne
-        # } else if (input$tripsWhich == 2) {
-        #   routesForMap = routesABe
-        # }
-
-        routesForMap = eval(parse(text = paste(input$tripsWhich)))
-
-        proxy %>% addRoutes(routesForMap, input$tripsCutoff)
-      }
+    sankeyTrips(routesData, input$tripsCutoff)
   })
 
-  output$maxTripABe = renderInfoBox({
-    trip = getTrip(routesABe)
-
-    infoBox(h4('Trip most taken (A:B=B:A)'), h6(trip), icon=icon('arrow-up'))
+  output$tripsSankey = renderGvis({
+    tripsSankeyReact()
   })
 
-  output$maxTripABne = renderInfoBox({
-    trip = getTrip(routesABne)
-
-    infoBox(h4('Trip most taken (A:B!=B:A)'), h6(trip), icon=icon('arrow-up'))
+  tripsTableReact = reactive({
+    tripsTable(input$tripsWhich)
   })
 
-  output$tripCount = renderInfoBox({
-    infoBox(h4('Trips'), format(nrow(trips), scientific=F, decimal.mark=".", big.mark=","), icon=icon('exchange'))
-  })
+  output$tripsTable = renderGvis(
+    tripsTableReact()
+  )
 
-  output$bikeCount = renderInfoBox({
+  ########## BIKES ##########
+  bikeCountReact = reactive({
     infoBox(
       h4('Bikes in use'),
       n_distinct(bikes),
@@ -59,7 +234,11 @@ shinyServer(function(input, output, session) {
     )
   })
 
-  output$maxBike = renderInfoBox({
+  output$bikeCount = renderInfoBox({
+    bikeCountReact()
+  })
+
+  maxBikeReact = reactive({
     metric = input$bikesMetric
     bks = orderBikes(bikes, metric, 'desc')
 
@@ -73,7 +252,11 @@ shinyServer(function(input, output, session) {
     )
   })
 
-  output$minBike = renderInfoBox({
+  output$maxBike = renderInfoBox({
+    maxBikeReact()
+  })
+
+  minBikeReact = reactive({
     metric = input$bikesMetric
     bks = orderBikes(bikes, metric)
 
@@ -87,166 +270,114 @@ shinyServer(function(input, output, session) {
     )
   })
 
-  output$bikesPlot = renderGvis(
-    bikeHisto(bikes, input$bikesMetric)
-  )
-
-  output$bikesOps = renderGvis(
-    bikeTimeLine(input$bikeOpsDays)
-  )
-
-  # STATIONS
-  output$stationsMap = renderLeaflet(
-    stationMap('stations')
-  )
-
-  output$staCount = renderInfoBox(
-    infoBox(h4('Stations'), nrow(stations), icon = icon('home'))
-  )
-
-  output$cityCount = renderInfoBox(
-    infoBox(h4('Cities'), nrow(distinct(stations, landmark)), icon = icon('map-signs'))
-  )
-
-  output$dockCount = renderInfoBox(
-    infoBox(h4('Docks'), format(sum(stations$dockcount), scientific=F, decimal.mark=".", big.mark=","), icon = icon('plug'))
-  )
-
-  output$staPerCity = renderGvis(
-    #stationBar('staPerCity')
-    stationColumn('staPerCity')
-  )
-
-  # output$dockPerCity = renderGvis(
-  #   #stationBar('dockPerCity')
-  #   stationColumn('dockPerCity')
-  # )
-
-  output$staStartByHour = renderPlot(
-    stationRoseChart(staStartByHour, input$stationDetail)
-  )
-
-  output$staEndByHour = renderPlot(
-    stationRoseChart(staEndByHour, input$stationDetail)
-  )
-
-  output$staStartByHourComp1 = renderPlot(
-    stationRoseChart(staStartByHour, input$staComp1)
-  )
-
-  output$staStartByHourComp2 = renderPlot(
-    stationRoseChart(staStartByHour, input$staComp2)
-  )
-
-  output$staEndByHourComp1 = renderPlot(
-    stationRoseChart(staEndByHour, input$staComp1)
-  )
-
-  output$staEndByHourComp2 = renderPlot(
-    stationRoseChart(staEndByHour, input$staComp2)
-  )
-
-  output$staCalendar = renderGvis(
-    stationCalendar(staStartByDate, stations, input$stationDetail)
-  )
-
-  output$staCalendarComp1 = renderGvis(
-    stationCalendar(staStartByDate, stations, input$staComp1)
-  )
-
-  output$staCalendarComp2 = renderGvis(
-    stationCalendar(staStartByDate, stations, input$staComp2)
-  )
-
-  output$tripsSankey = renderGvis({
-    if (input$tripsWhich == 0) {
-      routesData = data.frame(nameStart='From', nameEnd='To', n=input$tripsCutoff+1)
-    } else {
-      routesData = eval(parse(text = paste0(input$tripsWhich, 'Sankey')))
-    }
-
-    sankeyTrips(routesData, input$tripsCutoff)
+  output$minBike = renderInfoBox({
+    minBikeReact()
   })
 
-  output$tripsTable = renderGvis(
-    gvisTable(
-      transmute(
-        eval(parse(text = paste(input$tripsWhich))),
-        Start = nameStart,
-        End = nameEnd,
-        Trips = n,
-        Total.Duration = round(totalDur / 60, 2),
-        Min.Duration = round(minDur / 60, 2),
-        Max.Duration = round(maxDur / 60, 2),
-        Avg.Duration = round(avgDur / 60, 2),
-        Med.Duration = round(medDur / 60, 2)
-      )
-    )
+  bikesPlotReact = reactive({
+    bikeHisto(bikes, input$bikesMetric)
+  })
+
+  output$bikesPlot = renderGvis(
+    bikesPlotReact()
   )
 
-  output$custSubscr = renderValueBox(
+  bikesOpsReact = reactive({
+    bikeTimeLine(input$bikeOpsDays)
+  })
+
+  output$bikesOps = renderGvis(
+    bikesOpsReact()
+  )
+
+  ########## CUSTOMERS ##########
+  custSubscrReact = reactive({
     valueBox(
       format(as.integer(select(filter(cust, Subscriber.Type == 'Subscriber'), n)), scientific=F, decimal.mark=".", big.mark=","),
       'Trips by Subscribers',
       icon=icon('address-book-o')
     )
+  })
+
+  output$custSubscr = renderValueBox(
+    custSubscrReact()
   )
 
-  output$custCust = renderValueBox(
+  custCustReact = reactive({
     valueBox(
       format(as.integer(select(filter(cust, Subscriber.Type == 'Customer'), n)), scientific=F, decimal.mark=".", big.mark=","),
       'Trips by Customers',
       icon=icon('credit-card')
     )
+  })
+
+  output$custCust = renderValueBox(
+    custCustReact()
   )
 
-  output$custSubscrVsCust = renderValueBox(
+  custSubscrVsCustReact = reactive({
     valueBox(
       round(
         as.integer(select(filter(cust, Subscriber.Type == 'Subscriber'), n)) /
-        as.integer(select(filter(cust, Subscriber.Type == 'Customer'), n)),
+          as.integer(select(filter(cust, Subscriber.Type == 'Customer'), n)),
         3
       ),
       'Trips: Customers vs. Subscribers',
       icon=icon('line-chart')
     )
+  })
+
+  output$custSubscrVsCust = renderValueBox(
+    custSubscrVsCustReact()
   )
 
-  output$custSubscrDur = renderValueBox(
+  custSubscrDurReact = reactive({
     valueBox(
       paste0(
         format(as.integer(select(filter(cust, Subscriber.Type == 'Subscriber'), dur) / 60 / 60), scientific=F, decimal.mark=".", big.mark=","),
         'h'
       ),
-      'Duration by Subscribers',
+      'Total trip duration by Subscribers',
       icon=icon('clock-o')
     )
+  })
+
+  output$custSubscrDur = renderValueBox(
+    custSubscrDurReact()
   )
 
-  output$custCustDur = renderValueBox(
+  custCustDurReact = reactive({
     valueBox(
       paste0(
         format(as.integer(select(filter(cust, Subscriber.Type == 'Customer'), dur) / 60 / 60), scientific=F, decimal.mark=".", big.mark=","),
         'h'
       ),
-      'Duration by Customers',
+      'Total trip duration by Customers',
       icon=icon('clock-o')
     )
+  })
+
+  output$custCustDur = renderValueBox(
+    custCustDurReact()
   )
 
-  output$custSubscrVsCustDur = renderValueBox(
+  custSubscrVsCustDurReact = reactive({
     valueBox(
       round(
         as.integer(select(filter(cust, Subscriber.Type == 'Subscriber'), dur)) /
-        as.integer(select(filter(cust, Subscriber.Type == 'Customer'), dur)),
+          as.integer(select(filter(cust, Subscriber.Type == 'Customer'), dur)),
         3
       ),
       'Duration: Customers vs. Subscribers',
       icon=icon('bar-chart')
     )
+  })
+
+  output$custSubscrVsCustDur = renderValueBox(
+    custSubscrVsCustDurReact()
   )
 
-  output$custSubscrMedDur = renderValueBox(
+  custSubscrMedDurReact = reactive({
     valueBox(
       paste0(
         format(as.integer(select(filter(cust, Subscriber.Type == 'Subscriber'), medDur) / 60), scientific=F, decimal.mark=".", big.mark=","),
@@ -255,9 +386,13 @@ shinyServer(function(input, output, session) {
       'Med. Duration by Subscribers',
       icon=icon('clock-o')
     )
+  })
+
+  output$custSubscrMedDur = renderValueBox(
+    custSubscrMedDurReact()
   )
 
-  output$custCustMedDur = renderValueBox(
+  custCustMedDurReact = reactive({
     valueBox(
       paste0(
         format(as.integer(select(filter(cust, Subscriber.Type == 'Customer'), medDur) / 60), scientific=F, decimal.mark=".", big.mark=","),
@@ -266,9 +401,13 @@ shinyServer(function(input, output, session) {
       'Med. Duration by Customers',
       icon=icon('clock-o')
     )
+  })
+
+  output$custCustMedDur = renderValueBox(
+    custCustMedDurReact()
   )
 
-  output$custSubscrVsCustMedDur = renderValueBox(
+  custSubscrVsCustMedDurReact = reactive({
     valueBox(
       round(
         as.integer(select(filter(cust, Subscriber.Type == 'Subscriber'), medDur)) /
@@ -278,22 +417,19 @@ shinyServer(function(input, output, session) {
       'Med. Duration: Customers vs. Subscribers',
       icon=icon('area-chart')
     )
+  })
+
+  output$custSubscrVsCustMedDur = renderValueBox(
+    custSubscrVsCustMedDurReact()
   )
 
-  output$datesLoaded = renderInfoBox(
-    infoBox(
-      h4('Data loaded for'),
-      paste(
-        min(trips$Start.Date),
-        '-',
-        max(trips$End.Date)
-      ),
-      icon = icon('calendar')
-    )
-  )
+  ########## WEATHER ##########
+  weatherTripsReact = reactive({
+    weatherTripsChart(weatherTrips, input$weatherCity, input$weatherDate[1], input$weatherDate[2], input$weatherMetric)
+  })
 
-  output$weatherTrips = renderGvis(
-    weatherTripsChart(weatherTrips, input$weatherCity, input$weatherDate[1], input$weatherDate[2], input$weatherTemp)
-  )
+  output$weatherTrips = renderGvis({
+    weatherTripsReact()
+  })
 })
 
